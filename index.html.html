@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>破解神秘數字</title>
+<style>
+:root{--bg:#0b0f17;--card:#141b29;--line:#26324a;--tx:#e8edf7;--mu:#8a97b0;--ac:#38e8c6;--gold:#ffc83d;--bad:#ff5d73;--snake:#7CFF6B;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eef2f8;--card:#fff;--line:#d3dbea;--tx:#141b29;--mu:#5d6a85;--ac:#009e86;--gold:#c98a00;--snake:#1f9d2a}}
+:root[data-theme="dark"]{--bg:#0b0f17}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;padding:18px 14px 40px}
+header{text-align:center;margin-bottom:14px}
+h1{margin:0;font-size:clamp(26px,5vw,38px);letter-spacing:.12em}
+h1 span{color:var(--ac)}
+#sub{color:var(--mu);margin:6px 0 0;transition:.4s}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.score{text-align:center;position:relative;overflow:hidden;transition:.5s}
+.score .lb{font-size:12px;letter-spacing:.3em;color:var(--mu)}
+.score .num{font-size:clamp(40px,9vw,60px);font-weight:800;font-variant-numeric:tabular-nums;color:var(--gold);line-height:1.15;transition:.5s}
+.score.hot{border-color:var(--gold);box-shadow:0 0 28px -8px var(--gold)}
+.score.hot .num{font-size:clamp(52px,12vw,84px)}
+.score.bump .num{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.18)}}
+.score.hidden-s{opacity:.55}
+.float{position:absolute;left:50%;top:48%;font-size:30px;font-weight:800;color:var(--ac);pointer-events:none;animation:fl 1.3s ease-out forwards}
+@keyframes fl{from{transform:translate(-50%,10px);opacity:1}to{transform:translate(-50%,-70px);opacity:0}}
+#nudge{min-height:24px;text-align:center;color:var(--gold);font-weight:700;margin:10px 0 0;opacity:0;transition:.5s}
+#nudge.on{opacity:1}
+.slots{display:flex;gap:10px;justify-content:center;margin:6px 0 14px}
+.slot{width:clamp(54px,16vw,70px);height:clamp(64px,19vw,82px);border:2px solid var(--line);border-radius:12px;display:grid;place-items:center;font-size:36px;font-weight:700;font-family:ui-monospace,Menlo,monospace}
+.slot.on{border-color:var(--ac);box-shadow:0 0 14px -4px var(--ac)}
+.slots.shake{animation:sh .35s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pad button,.go{font:inherit;color:var(--tx);background:transparent;border:1px solid var(--line);border-radius:10px;padding:13px 0;font-size:20px;cursor:pointer;transition:.15s}
+.pad button:hover{border-color:var(--ac)}.pad button:disabled{opacity:.25;cursor:default}
+.go{width:100%;margin-top:12px;background:var(--ac);color:#04251f;font-weight:800;border:0;font-size:18px}
+.msg{text-align:center;color:var(--bad);min-height:22px;margin:0 0 6px;font-size:14px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{color:var(--mu);font-weight:500;font-size:13px;text-align:left;padding:4px 6px}
+td{padding:9px 6px;border-top:1px solid var(--line);font-family:ui-monospace,Menlo,monospace}
+td.r b{color:var(--ac)}td.p{color:var(--gold);font-weight:700}
+tr.new{animation:rw .8s}
+@keyframes rw{from{background:rgba(255,200,61,.25)}}
+.hist{max-height:420px;overflow:auto}
+.empty{color:var(--mu);text-align:center;padding:24px 0}
+.tag{font-size:12px;color:var(--mu);text-align:center;margin-top:8px}
+/* reveal */
+#rev{position:fixed;inset:0;background:var(--bg);z-index:9;display:none;overflow:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 18px calc(24px + env(safe-area-inset-bottom,0px))}
+#rev.on{display:block}
+.rv{max-width:620px;margin:0 auto;text-align:center}
+.rv>*{opacity:0;transform:translateY(14px);transition:.8s}
+.rv>.show{opacity:1;transform:none}
+.big{font-size:clamp(24px,5vw,34px);font-weight:800;margin:26px 0 8px}
+.q{font-size:20px;color:var(--mu);margin:22px 0}
+.morph{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:24px 0}
+.box{flex:1;min-width:200px;border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--card)}
+.box small{display:block;color:var(--mu);font-size:12px;letter-spacing:.2em;margin-bottom:6px}
+.box.b2{border-color:var(--gold)}.box.b2 div{color:var(--gold);font-weight:700}
+.arr{font-size:28px;color:var(--mu)}
+.snake{font-size:72px;margin:6px 0}
+.cobra{font-size:28px;font-weight:800;color:var(--snake)}
+.stats{display:flex;gap:10px;justify-content:center;margin:16px 0;flex-wrap:wrap}
+.stats div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px}
+.stats b{display:block;font-size:22px;color:var(--gold)}
+.stats span{font-size:12px;color:var(--mu)}
+.btn{font:inherit;background:var(--ac);color:#04251f;border:0;border-radius:10px;padding:12px 28px;font-weight:800;font-size:17px;cursor:pointer;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>破解<span>神秘</span>數字</h1><p id="sub">系統藏了一組 4 位數字，不重複。你能猜中它嗎？</p></header>
+<div class="grid">
+ <div>
+  <div class="card score hidden-s" id="sc"><div class="lb">CURRENT SCORE</div><div class="num" id="num">0</div></div>
+  <div id="nudge"></div>
+  <div class="card" style="margin-top:14px">
+   <p style="text-align:center;margin:0 0 10px;color:var(--mu)">請輸入4位數字</p>
+   <div class="slots" id="slots"></div>
+   <p class="msg" id="msg"></p>
+   <div class="pad" id="pad"></div>
+   <button class="go" id="go">確認猜測</button>
+  </div>
+ </div>
+ <div class="card">
+  <div class="hist">
+  <table><thead><tr><th>#</th><th>猜測</th><th>結果</th><th>獲得分數</th></tr></thead><tbody id="hb"></tbody></table>
+  <div class="empty" id="emp">尚無紀錄</div></div>
+  <div class="tag">A：數字對、位置也對　B：數字對、位置不對</div>
+ </div>
+</div>
+</div>
+<div id="rev"><div class="rv" id="rv"></div></div>
+<script>
+let secret,cur,hist,score,done,shown;
+const $=id=>document.getElementById(id);
+const nudges=["A越多，分數越高！","想辦法拿到更多A！","你現在的目標是幾A？","3A 就是 1,500 分，還能更高嗎？","這一輪，你想拿幾個A？"];
+function newGame(){
+ const d=[0,1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5);
+ secret=d.slice(0,4).join("");cur="";hist=[];score=0;done=false;shown=0;
+ $("hb").innerHTML="";$("emp").style.display="";$("num").textContent="0";
+ $("sc").className="card score hidden-s";$("nudge").className="";
+ $("sub").textContent="系統藏了一組 4 位數字，不重複。你能猜中它嗎？";
+ $("rev").classList.remove("on");render();
+}
+function render(){
+ $("slots").innerHTML=[0,1,2,3].map(i=>`<div class="slot ${i===cur.length?'on':''}">${cur[i]??""}</div>`).join("");
+ [...$("pad").children].forEach(b=>{b.disabled=b.dataset.d&&cur.includes(b.dataset.d)});
+}
+function buildPad(){
+ const p=$("pad");
+ for(let i=0;i<10;i++){const b=document.createElement("button");b.textContent=i;b.dataset.d=i;b.onclick=()=>press(String(i));p.appendChild(b)}
+ const c=document.createElement("button");c.textContent="⌫";c.onclick=()=>{cur=cur.slice(0,-1);$("msg").textContent="";render()};p.appendChild(c);
+}
+function press(d){if(done||cur.length>=4||cur.includes(d))return;cur+=d;$("msg").textContent="";render()}
+document.addEventListener("keydown",e=>{
+ if(/^\d$/.test(e.key))press(e.key);
+ else if(e.key==="Backspace"){cur=cur.slice(0,-1);render()}
+ else if(e.key==="Enter")submit();
+});
+$("go").onclick=submit;
+function submit(){
+ if(done)return;
+ if(cur.length<4){err("請輸入完整的4位數字");return}
+ if(hist.some(h=>h.g===cur)){err("這組數字已經猜過了");return}
+ let a=0,b=0;
+ for(let i=0;i<4;i++){if(cur[i]===secret[i])a++;else if(secret.includes(cur[i]))b++}
+ const pts=a*500;hist.push({g:cur,a,b,pts});
+ addRow(hist.length,cur,a,b,pts);
+ const from=score;score+=pts;
+ if(pts>0)reward(from,score,pts);
+ stage(a);cur="";render();
+ if(a===4){done=true;setTimeout(reveal,1900)}
+}
+function err(t){$("msg").textContent=t;const s=$("slots");s.classList.remove("shake");void s.offsetWidth;s.classList.add("shake")}
+function addRow(n,g,a,b,p){
+ $("emp").style.display="none";
+ const tr=document.createElement("tr");tr.className="new";
+ tr.innerHTML=`<td>${n}</td><td>${g}</td><td class="r"><b>${a}A</b>${b}B</td><td class="p">${p?"+"+p.toLocaleString():"0"}</td>`;
+ $("hb").prepend(tr);
+}
+function reward(f,t,pts){
+ const sc=$("sc"),el=document.createElement("div");
+ el.className="float";el.textContent="+"+pts.toLocaleString();sc.appendChild(el);setTimeout(()=>el.remove(),1300);
+ sc.classList.remove("bump");void sc.offsetWidth;sc.classList.add("bump");
+ const t0=performance.now(),D=700;
+ (function tick(n){const k=Math.min(1,(n-t0)/D);$("num").textContent=Math.round(f+(t-f)*k).toLocaleString();if(k<1)requestAnimationFrame(tick)})(t0);
+}
+function stage(a){
+ const n=hist.length;
+ if(score>0){$("sc").classList.remove("hidden-s");$("sc").classList.add("hot")}
+ if(n>=2&&!done){const t=nudges[Math.min(nudges.length-1,Math.floor((n-2)/2))];$("nudge").textContent=t;$("nudge").className="on"}
+ if(n>=3&&!done)$("sub").textContent="A越多，分數越高。你這一輪的目標是？";
+ if(n>=5&&!done)$("sub").textContent="衝高分！看看你能累積多少。";
+}
+function reveal(){
+ const n=hist.length,top=Math.max(...hist.map(h=>h.a)),
+ avg=(hist.reduce((s,h)=>s+h.a,0)/n).toFixed(1),
+ chase=hist.filter(h=>h.a>=2).length;
+ const steps=[
+ `<div class="big">🔓 恭喜，你破解了密碼！</div>`,
+ `<div class="stats"><div><b>${n}</b><span>猜測次數</span></div><div><b>${score.toLocaleString()}</b><span>最終總分</span></div><div><b>${avg}</b><span>平均每次 A 數</span></div></div>`,
+ `<div class="q">但你在遊戲過程中，是否發現一件事？</div>`,
+ `<div class="morph"><div class="box"><small>原本目標</small><div>猜中正確數字</div></div><div class="arr">➜</div><div class="box b2"><small>實際追求</small><div>最大化A → 最大化分數</div></div></div>`,
+ `<div class="q">你是不是開始在意A有幾個，而不只是答案對不對？<br><span style="font-size:15px">（你有 ${chase} 次猜測拿到 2A 以上，最高單次 ${top}A）</span></div>`,
+ `<div class="big">這就是「不當誘因」可能造成的結果。</div><div class="q" style="margin-top:0">當我們用獎勵鼓勵某種行為時，人可能會開始追求獎勵本身，而不是原本真正想達成的目標。</div>`,
+ `<div class="snake">🐍</div><div class="cobra">「眼鏡蛇效應」</div><div class="q">當誘因設計錯誤，解決問題的政策，可能反而讓人產生另一種行為。</div><button class="btn" onclick="newGame()">再玩一次</button>`
+ ];
+ const rv=$("rv");rv.innerHTML=steps.map(s=>`<div>${s}</div>`).join("");
+ $("rev").classList.add("on");
+ [...rv.children].forEach((c,i)=>setTimeout(()=>c.classList.add("show"),400+i*1900));
+}
+buildPad();newGame();
+</script>
+</body>
+</html>
